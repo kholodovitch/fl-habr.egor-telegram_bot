@@ -10,9 +10,18 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.Keyboard
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class TelegramBot extends TelegramLongPollingBot {
+
+    public static final String CMD_START = "/start";
+    public static final String CMD_I_WANT_TO_PARTICIPATE_IN_THE_DRAWING = "Хочу участвовать в розыгрыше";
+    public static final String[] CMD_CHANGE_ARRAY = new String[]{"change 1", "change 2", "change 3"};
+
+    public static final String MSG_WHAT_YOU_WANT = "Добрый день, скажите чего вы хотите";
+    public static final String MSG_MAKE_YOUR_CHOICE = "Сделайте ваш выбор";
+    public static final String MSG_YOU_ARE_WIN = "Вы победили!";
 
     private final String name;
 
@@ -21,7 +30,9 @@ public class TelegramBot extends TelegramLongPollingBot {
         this.name = name;
     }
 
-    //Имя бота
+    /**
+     * Имя бота
+     */
     @Override
     public String getBotUsername() {
         return this.name;
@@ -34,54 +45,45 @@ public class TelegramBot extends TelegramLongPollingBot {
             return;
 
         Message inputMessage = update.getMessage();
-        String chat_id = update.getMessage().getChatId().toString();
-        String client_message = inputMessage.getText().toLowerCase().trim();
-
+        String chatId = update.getMessage().getChatId().toString();
+        String clientMessage = inputMessage.getText().trim();
         SendMessage message = new SendMessage();
+        String messageOut;
 
-        String message_out;
-
-        if (client_message.equals("/start".toLowerCase().trim())) {
-            message_out = "Добрый день, скажите чего вы хотите";
-            message.setChatId(chat_id);
-            message.setText(message_out);
-            setButtons(message);
-            try {
-                execute(message); // Метод отправки сообщения
-            } catch (TelegramApiException e) {
-                e.printStackTrace();
+        switch (clientMessage) {
+            case CMD_START -> {
+                messageOut = MSG_WHAT_YOU_WANT;
+                setButtons(message);
+            }
+            case CMD_I_WANT_TO_PARTICIPATE_IN_THE_DRAWING -> {
+                messageOut = MSG_MAKE_YOUR_CHOICE;
+                setChangeButtons(message);
+            }
+            default -> {
+                if (Arrays.asList(CMD_CHANGE_ARRAY).contains(clientMessage)) {
+                    setButtons(message);
+//                  clearButton(message);
+                    messageOut = MSG_YOU_ARE_WIN;
+                } else {
+                    throw new IllegalStateException("Unexpected value: %s".formatted(clientMessage));
+                }
             }
         }
 
-        String str1 = "хочу участвовать в розыгрыше".toLowerCase().trim();
-
-        if (client_message.equals(str1)) {
-            message.setChatId(chat_id);
-            message_out = "Сделайте ваш выбор";
-            message.setText(message_out);
-            setChangeButtons(message);
-            try {
-                execute(message); // Метод отправки сообщения
-            } catch (TelegramApiException e) {
-                e.printStackTrace();
-            }
-        }
-
-        if (client_message.startsWith("change")) {
-            setButtons(message);
-//          clearButton(message);
-            message.setChatId(chat_id);
-            message_out = "Вы победили!";
-            message.setText(message_out);
-            try {
-                execute(message); // Метод отправки сообщения
-            } catch (TelegramApiException e) {
-                e.printStackTrace();
-            }
+        try {
+            message.setChatId(chatId);
+            message.setText(messageOut);
+            execute(message); // Метод отправки сообщения
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
         }
     }
 
-    // клавиатура дефолта
+    /**
+     * клавиатура дефолта
+     *
+     * @param sendMessage
+     */
     private void setButtons(SendMessage sendMessage) {
         ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();
         sendMessage.setReplyMarkup(replyKeyboardMarkup);
@@ -94,18 +96,17 @@ public class TelegramBot extends TelegramLongPollingBot {
         KeyboardRow keyboardRow = new KeyboardRow();
 
         //собственно сами кнопки
-        keyboardRow.add(new KeyboardButton("Хочу участвовать в розыгрыше"));
-
+        keyboardRow.add(new KeyboardButton(CMD_I_WANT_TO_PARTICIPATE_IN_THE_DRAWING));
         keyboardRowList.add(keyboardRow);
         replyKeyboardMarkup.setKeyboard(keyboardRowList);
     }
 
-    // клавиатура выбора
+    /**
+     * клавиатура выбора
+     *
+     * @param sendMessage
+     */
     private void setChangeButtons(SendMessage sendMessage) {
-
-        List<String> changeList = List.of("change 1", "change 2", "change 3");
-
-
         ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();
         sendMessage.setReplyMarkup(replyKeyboardMarkup);
 
@@ -114,15 +115,14 @@ public class TelegramBot extends TelegramLongPollingBot {
         replyKeyboardMarkup.setOneTimeKeyboard(true);
         List<KeyboardRow> keyboardRowList = new ArrayList<>();
 
-        for (String change : changeList) {
-
+        for (String change : CMD_CHANGE_ARRAY) {
             KeyboardRow keyboardRow = new KeyboardRow();
 
             //собственно сами кнопки
             keyboardRow.add(new KeyboardButton(change));
             keyboardRowList.add(keyboardRow);
-            replyKeyboardMarkup.setKeyboard(keyboardRowList);
         }
+        replyKeyboardMarkup.setKeyboard(keyboardRowList);
     }
 
 //    // установка пустой клавиатуры
