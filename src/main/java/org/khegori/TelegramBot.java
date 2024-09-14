@@ -9,33 +9,22 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.Keyboard
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
-import java.io.IOException;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class TelegramBot extends TelegramLongPollingBot {
 
-    private static String token;
-    private static String name;
+    private final String name;
 
-    public void configureBot(String token, String name) throws SQLException, IOException, ClassNotFoundException {
-
-        this.token = token;
+    public TelegramBot(String token, String name) {
+        super(token);
         this.name = name;
     }
-
 
     //Имя бота
     @Override
     public String getBotUsername() {
         return this.name;
-    }
-
-    //Токен
-    @Override
-    public String getBotToken() {
-        return this.token;
     }
 
     @Override
