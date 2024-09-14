@@ -29,61 +29,55 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     @Override
     public void onUpdateReceived(Update update) {
+        // если НЕ текстовое сообщение
+        if (!update.hasMessage() || !update.getMessage().hasText())
+            return;
 
-        try {
+        Message inputMessage = update.getMessage();
+        String chat_id = update.getMessage().getChatId().toString();
+        String client_message = inputMessage.getText().toLowerCase().trim();
 
-            //если текстовое сообщение
-            if (update.hasMessage() && update.getMessage().hasText()) {
+        SendMessage message = new SendMessage();
 
-                Message inputMessage = update.getMessage();
-                String chat_id = update.getMessage().getChatId().toString();
-                String client_message = inputMessage.getText().toLowerCase().trim();
+        String message_out;
 
-                SendMessage message = new SendMessage();
-
-                String message_out ;
-
-                if (client_message.equals("/start".toLowerCase().trim())) {
-                    message_out = "Добрый день, скажите чего вы хотите";
-                    message.setChatId(chat_id);
-                    message.setText(message_out);
-                    setButtons(message);
-                    try {
-                        execute(message); // Метод отправки сообщения
-                    } catch (TelegramApiException e) {
-                        e.printStackTrace();
-                    }
-                }
-
-                String str1 = "хочу участвовать в розыгрыше".toLowerCase().trim();
-
-                if (client_message.equals(str1)) {
-                    message.setChatId(chat_id);
-                    message_out = "Сделайте ваш выбор";
-                    message.setText(message_out);
-                    setChangeButtons(message);
-                    try {
-                        execute(message); // Метод отправки сообщения
-                    } catch (TelegramApiException e) {
-                        e.printStackTrace();
-                    }
-                }
-
-                if (client_message.startsWith("change")) {
-                    setButtons(message);
-//                    clearButton(message);
-                    message.setChatId(chat_id);
-                    message_out = "Вы победили!";
-                    message.setText(message_out);
-                    try {
-                        execute(message); // Метод отправки сообщения
-                    } catch (TelegramApiException e) {
-                        e.printStackTrace();
-                    }
-                }
+        if (client_message.equals("/start".toLowerCase().trim())) {
+            message_out = "Добрый день, скажите чего вы хотите";
+            message.setChatId(chat_id);
+            message.setText(message_out);
+            setButtons(message);
+            try {
+                execute(message); // Метод отправки сообщения
+            } catch (TelegramApiException e) {
+                e.printStackTrace();
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+        }
+
+        String str1 = "хочу участвовать в розыгрыше".toLowerCase().trim();
+
+        if (client_message.equals(str1)) {
+            message.setChatId(chat_id);
+            message_out = "Сделайте ваш выбор";
+            message.setText(message_out);
+            setChangeButtons(message);
+            try {
+                execute(message); // Метод отправки сообщения
+            } catch (TelegramApiException e) {
+                e.printStackTrace();
+            }
+        }
+
+        if (client_message.startsWith("change")) {
+            setButtons(message);
+//          clearButton(message);
+            message.setChatId(chat_id);
+            message_out = "Вы победили!";
+            message.setText(message_out);
+            try {
+                execute(message); // Метод отправки сообщения
+            } catch (TelegramApiException e) {
+                e.printStackTrace();
+            }
         }
     }
 
