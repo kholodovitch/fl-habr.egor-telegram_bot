@@ -1,5 +1,6 @@
 package org.khegori;
 
+import org.apache.commons.lang3.StringUtils;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
@@ -12,6 +13,7 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Stream;
 
 public class TelegramBot extends TelegramLongPollingBot {
 
@@ -53,7 +55,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         switch (clientMessage) {
             case CMD_START -> {
                 messageOut = MSG_WHAT_YOU_WANT;
-                setButtons(message);
+                setActionButtons(message);
             }
             case CMD_I_WANT_TO_PARTICIPATE_IN_THE_DRAWING -> {
                 messageOut = MSG_MAKE_YOUR_CHOICE;
@@ -61,7 +63,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             }
             default -> {
                 if (Arrays.asList(CMD_CHANGE_ARRAY).contains(clientMessage)) {
-                    setButtons(message);
+                    setActionButtons(message);
 //                  clearButton(message);
                     messageOut = MSG_YOU_ARE_WIN;
                 } else {
@@ -80,66 +82,57 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     /**
-     * клавиатура дефолта
-     *
-     * @param sendMessage
+     * кастомная клавиатура
      */
-    private void setButtons(SendMessage sendMessage) {
+    private void setButtons(SendMessage message, IKeyboardProcessor processor) {
         ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();
-        sendMessage.setReplyMarkup(replyKeyboardMarkup);
+        message.setReplyMarkup(replyKeyboardMarkup);
 
         replyKeyboardMarkup.setSelective(true);
         replyKeyboardMarkup.setResizeKeyboard(true);
         replyKeyboardMarkup.setOneTimeKeyboard(true);
 
         List<KeyboardRow> keyboardRowList = new ArrayList<>();
-        KeyboardRow keyboardRow = new KeyboardRow();
-
-        //собственно сами кнопки
-        keyboardRow.add(new KeyboardButton(CMD_I_WANT_TO_PARTICIPATE_IN_THE_DRAWING));
-        keyboardRowList.add(keyboardRow);
+        processor.process(keyboardRowList);
         replyKeyboardMarkup.setKeyboard(keyboardRowList);
     }
 
     /**
-     * клавиатура выбора
-     *
-     * @param sendMessage
+     * клавиатура дефолта
      */
-    private void setChangeButtons(SendMessage sendMessage) {
-        ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();
-        sendMessage.setReplyMarkup(replyKeyboardMarkup);
-
-        replyKeyboardMarkup.setSelective(true);
-        replyKeyboardMarkup.setResizeKeyboard(true);
-        replyKeyboardMarkup.setOneTimeKeyboard(true);
-        List<KeyboardRow> keyboardRowList = new ArrayList<>();
-
-        for (String change : CMD_CHANGE_ARRAY) {
-            KeyboardRow keyboardRow = new KeyboardRow();
-
-            //собственно сами кнопки
-            keyboardRow.add(new KeyboardButton(change));
-            keyboardRowList.add(keyboardRow);
-        }
-        replyKeyboardMarkup.setKeyboard(keyboardRowList);
+    private void setActionButtons(SendMessage message) {
+        setButtons(message, keyboardRowList -> {
+            List<KeyboardButton> buttons = List.of(new KeyboardButton(CMD_I_WANT_TO_PARTICIPATE_IN_THE_DRAWING));
+            keyboardRowList.add(new KeyboardRow(buttons));
+        });
     }
 
-//    // установка пустой клавиатуры
-//    private void clearButton(SendMessage sendMessage) {
-//        ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();
-//        sendMessage.setReplyMarkup(replyKeyboardMarkup);
-//
-//        replyKeyboardMarkup.setSelective(true);
-//        replyKeyboardMarkup.setResizeKeyboard(true);
-//        replyKeyboardMarkup.setOneTimeKeyboard(true);
-//
-//        List<KeyboardRow> keyboardRowList = new ArrayList<>();
-//        KeyboardRow keyboardRow = new KeyboardRow();
-//        keyboardRow.add(new KeyboardButton(""));
-//
-//        keyboardRowList.add(keyboardRow);
-//        replyKeyboardMarkup.setKeyboard(keyboardRowList);
-//    }
+    /**
+     * клавиатура выбора
+     */
+    private void setChangeButtons(SendMessage message) {
+        setButtons(message, keyboardRowList -> {
+            Stream<KeyboardRow> rowsToAdd = Arrays
+                    .stream(CMD_CHANGE_ARRAY)
+                    .map(x -> {
+                        List<KeyboardButton> buttons = List.of(new KeyboardButton(CMD_I_WANT_TO_PARTICIPATE_IN_THE_DRAWING));
+                        return new KeyboardRow(buttons);
+                    });
+            keyboardRowList.addAll(rowsToAdd.toList());
+        });
+    }
 
+    /**
+     * установка пустой клавиатуры
+     */
+    private void clearButton(SendMessage message) {
+        setButtons(message, keyboardRowList -> {
+            List<KeyboardButton> buttons = List.of(new KeyboardButton(StringUtils.EMPTY));
+            keyboardRowList.add(new KeyboardRow(buttons));
+        });
+    }
+
+    interface IKeyboardProcessor {
+        void process(List<KeyboardRow> keyboardRowList);
+    }
 }
