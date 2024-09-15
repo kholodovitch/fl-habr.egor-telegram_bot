@@ -132,6 +132,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         });
     }
 
+    @FunctionalInterface
     interface IKeyboardProcessor {
         void process(List<KeyboardRow> keyboardRowList);
     }
